@@ -1,0 +1,59 @@
+---
+title: "Provenance Layers: The Canon Boundary Guard Taxonomy"
+sidebarTitle: "Overview"
+description: "A reference for the six source classes Canon Boundary Guard uses to separate project evidence, chat context, operator instructions, and model assumptions."
+---
+
+Canon Boundary Guard organizes every piece of information Codex works with into one of six provenance layers. These layers do not judge whether something is true — they describe where material came from and whether it can safely become persistent project content. Understanding them is the foundation for working with the skill: once you know which layer a piece of content belongs to, the persistence and tagging rules follow directly.
+
+## The Six Layers
+
+The layer definitions below come directly from `SKILL.md` and the compact reference frame in `references/frame.md`. They are reproduced here without modification.
+
+| Tag | Name | One-line description |
+|-----|------|----------------------|
+| **L0** | EVIDENCE | Project files, git state, tests, schemas, lockfiles, diagnostics, command output, verified tool output from the current task. |
+| **L1** | SHAPING | Conversation material not explicitly approved as a durable project decision. Present in context, not in the project. |
+| **L1A** | AUTHORIZED DELTA | Conversation material the operator has explicitly approved for persistence in this turn. Becomes evidence only after written to a persistent artifact. |
+| **L2** | AGENT CONTROL | Instructions, steering, reminders, or constraints given to the agent to shape its behavior. Not project content. |
+| **L2A** | CODEX INSTRUCTION CHAIN | AGENTS guidance loaded by Codex from the instruction chain. Agent-control authority, not project content. |
+| **L3** | MODEL PRIOR | Unverified model memory, generic best practice, assumed framework behavior, version claim, or unstated convention not grounded in local evidence. |
+
+<Note>
+Layers do not decide whether something is true — they describe where material came from and whether it can safely become persistent project content. A claim from model memory is not made more reliable by tagging it L3; the tag simply makes its origin visible so the operator can decide what to do with it.
+</Note>
+
+## The Persistence Boundary
+
+The most consequential distinction in the taxonomy is between L0 and everything else.
+
+**L0** is the only layer that can become persistent project content without explicit operator approval. It represents verified evidence already grounded in the repository: files on disk, confirmed git state, test results, command output. Preserve or reorganize L0 freely; it is the ground truth of the session.
+
+**L1, L1A, L2, L2A, and L3** can all shape how Codex reasons and what it produces, but none of them should silently enter the repository:
+
+- **L1** does not persist. Conversation material that has not been explicitly approved remains in context only.
+- **L1A** can be written, but only within the scope the operator has explicitly approved for this turn. Once written to a persistent artifact, it graduates to L0.
+- **L2** does not persist unless the operator explicitly requests agent-facing operating instructions as a project artifact.
+- **L2A** governs Codex behavior at its scope and does not persist into project content unless explicitly requested.
+- **L3** does not persist unless it has been verified against L0 evidence or the operator has explicitly approved it.
+
+When provenance is unclear before a write operation, surface it rather than resolving it silently. If evidence conflicts, stop and report — do not resolve by recency, confidence, or intuition.
+
+## What Comes Next
+
+<CardGroup cols={2}>
+  <Card
+    title="L0 Evidence"
+    icon="database"
+    href="/layers/l0-evidence"
+  >
+    What qualifies as ground-truth evidence, how conflicts are handled, and why L0 is the only layer that persists without explicit approval.
+  </Card>
+  <Card
+    title="Non-L0 Layers"
+    icon="layer-group"
+    href="/layers/non-l0-layers"
+  >
+    Detailed definitions, example uses, and persistence rules for L1, L1A, L2, L2A, and L3.
+  </Card>
+</CardGroup>

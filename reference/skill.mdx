@@ -1,0 +1,99 @@
+---
+title: "The Canon Boundary Guard Skill Reference"
+sidebarTitle: "Skill"
+description: "Reference for SKILL.md and the session-level operating frame it defines: layers, rules, activation, invocation, and the posture Codex maintains throughout a session."
+---
+
+`SKILL.md` is the full operating frame for Canon Boundary Guard. It is not a task-specific generator, formatter, or media tool. It is a session-level classification system that gives Codex a durable way to distinguish project evidence, conversation material, operator instructions, working hypotheses, and model assumptions — and to keep those classes separate throughout reading, reasoning, planning, and writing.
+
+## Activation
+
+When this skill is invoked or selected, Codex must read the entire `SKILL.md` before responding or using tools.
+
+The compact hook frame in `references/frame.md` reinforces the frame before write and edit moments. It does not replace full skill activation at session start. The hook is a reinforcement point; the skill file is the authoritative operating contract.
+
+<Info>
+  After a context compaction event, re-invoke the skill explicitly. The compact frame injected by the hook is not a substitute for reading the full skill at session start.
+</Info>
+
+## Invocation
+
+The skill can be invoked in two ways. Either form activates the full operating frame for the session.
+
+```txt
+Use Canon Boundary Guard for this session.
+```
+
+```txt
+Use $canon-boundary-guard for this session.
+```
+
+## agents/openai.yaml Metadata
+
+The `agents/openai.yaml` file contains the Codex-facing skill metadata that Codex reads to surface, describe, and invoke the skill.
+
+```yaml
+interface:
+  display_name: "Canon Boundary Guard"
+  short_description: "Session provenance frame for Codex cognitive-layer separation"
+  default_prompt: "Use $canon-boundary-guard as the session operating frame for provenance and cognitive-layer separation."
+
+policy:
+  allow_implicit_invocation: true
+```
+
+Key fields:
+
+- **`display_name`** — the human-readable name shown in Codex plugin and skill pickers.
+- **`short_description`** — a one-line summary displayed alongside the skill in listing views.
+- **`default_prompt`** — the prompt Codex uses when the skill is invoked through the plugin interface without an explicit user message.
+- **`allow_implicit_invocation`** — when `true`, Codex may activate the skill without an explicit invocation command when context suggests it is appropriate.
+
+## Operating Posture
+
+The skill is designed to keep source classes separate throughout the entire session, not only at write time. The frame should affect how Codex reads files, analyzes code, plans changes, detects conflicts, and makes persistence decisions. The hook only re-surfaces the compact frame near matched write tools; the full operating posture is maintained by the skill itself, continuously, from the moment of invocation.
+
+When producing content that draws on non-L0 material, Codex tags inline using `[L1]`, `[L1A]`, `[L2]`, `[L2A]`, or `[L3]`. Tags apply when the content would change if the source changed — a rule, a name, a version, a behavioral claim. Tags are not applied to every word.
+
+## Layer Rules
+
+The following rules are stated verbatim in the `Rules` section of `SKILL.md`. They govern persistence and conflict handling across all six source classes.
+
+- Preserve or reorganize L0.
+- Write L1A only within the explicitly approved scope.
+- L1 does not persist.
+- L2 does not persist unless explicitly requested as agent-facing instruction.
+- L2A governs agent behavior and does not persist into project content unless explicitly requested.
+- L3 does not persist unless verified or operator-approved.
+- If evidence conflicts, stop and report. Do not resolve by recency, confidence, or intuition.
+- If provenance is unclear, surface it before writing.
+
+<Warning>
+  The rules prohibit silent promotion. If a piece of conversation history, a model assumption, or an agent-control instruction would silently become repository content, that is a rule violation. Codex must surface the conflict or promotion point before writing.
+</Warning>
+
+## Provenance Layers
+
+The six source classes used by Canon Boundary Guard are defined in `SKILL.md` and summarized in the compact `references/frame.md`:
+
+| Tag | Class | Persistence |
+|-----|-------|-------------|
+| `L0` | Project files, git state, tests, schemas, lockfiles, diagnostics, verified tool output | Preserved and reorganized freely |
+| `L1` | Conversation material not approved for persistence | Does not persist |
+| `L1A` | Operator-approved material for the current turn | Persists only within the approved scope |
+| `L2` | Instructions that shape agent behavior, not project content | Persists only when explicitly requested as agent-facing instruction |
+| `L2A` | AGENTS guidance and runtime instruction-chain material | Governs Codex behavior; does not persist into project content unless explicitly requested |
+| `L3` | Unverified model memory, assumed conventions, generic best practice, unstated framework behavior | Does not persist unless verified or operator-approved |
+
+<Note>
+  Non-L0 material is tagged only when the output would change if the source changed. The important boundary is persistence: L1, L2, L2A, and L3 can shape how Codex works, but they must not silently become repository content.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Layers Overview" icon="layer-group" href="/layers/overview">
+    Conceptual explanation of all six provenance layers and why they exist.
+  </Card>
+  <Card title="Hook Reference" icon="webhook" href="/reference/hook">
+    How the PreToolUse hook re-surfaces the compact frame at write time.
+  </Card>
+</CardGroup>

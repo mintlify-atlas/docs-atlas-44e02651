@@ -1,0 +1,74 @@
+---
+title: "Inline Tagging: Marking Non-L0 Content in Output"
+sidebarTitle: "Inline Tagging"
+description: "When and how to apply inline provenance tags in Canon Boundary Guard sessions, with the five tag forms and a practical annotated example."
+---
+
+Inline tagging is how Canon Boundary Guard makes provenance visible at the point of use. When Codex produces output that draws on non-L0 material — a version number from model memory, a naming convention from the current conversation, an instruction from the AGENTS chain — a short inline tag marks the origin so the operator can see exactly which parts of the output carry which kind of authority. The tag is not enforcement; it is information. It puts the classification signal at the spot where the content appears, rather than in a separate note the reader might miss.
+
+## When to Tag
+
+From `SKILL.md`:
+
+> Tag when the content would change if the source were different — a rule, a name, a version, a claim about behavior. Do not tag every word. Do not invent tags to appear diligent.
+
+The test is source-sensitivity: if the content would be different had a different source been used, tag it. If the content is universally true and not drawn from any particular source, no tag is needed. Tagging is not a coverage exercise — excessive tagging obscures rather than clarifies.
+
+Tag when you are producing content that:
+- States a version number not confirmed in a lockfile or project file.
+- Names a convention or pattern the operator mentioned in this conversation.
+- Describes framework behavior assumed from model training rather than confirmed by project code.
+- Applies an agent-control instruction that came from AGENTS.md or a session instruction.
+- Uses a name, a rule, or a behavioral claim that is specific to one source and would differ if that source were different.
+
+## The Five Tags
+
+| Tag | Layer | Meaning |
+|-----|-------|---------|
+| `[L1]` | SHAPING | From the current conversation; not approved for persistence. |
+| `[L1A]` | AUTHORIZED DELTA | Approved this turn; pending persistence. |
+| `[L2]` | AGENT CONTROL | Agent-control material; not project content. |
+| `[L2A]` | CODEX INSTRUCTION CHAIN | Codex instruction-chain guidance; not project content. |
+| `[L3]` | MODEL PRIOR | Model prior; unverified. |
+
+## Practical Example
+
+The following is an example of a Codex response that draws on multiple provenance layers. Tags appear inline at the point where the non-L0 content is used.
+
+```text
+Here is a draft for the utility function you requested [L1A].
+
+The function uses the `handleError` naming convention we discussed earlier [L1].
+It targets Node.js 20 [L3] — confirm this against your `.nvmrc` or `package.json`
+before committing. The retry logic follows the exponential backoff pattern [L3]
+assumed to be appropriate for this service; verify against the existing retry
+configuration in `lib/http.ts`.
+
+The export style matches the rest of the module [L0].
+```
+
+In this example:
+- `[L1A]` marks the draft itself as operator-approved content pending persistence.
+- `[L1]` marks the naming convention as coming from this conversation, not from project files.
+- `[L3]` marks two claims — a version number and a design pattern — that come from model knowledge and have not been confirmed against the project.
+- The export style note carries no tag because it was confirmed by reading the project files — it is L0.
+
+## When a Tag Changes the Meaning
+
+The rule is source-sensitivity. Consider these contrasting cases:
+
+| Content | Tag needed? | Reason |
+|---------|-------------|--------|
+| The function returns `null` on failure (confirmed in source) | No | L0 — verified against the file. |
+| The function returns `null` on failure (assumed from convention) | Yes — `[L3]` | Would differ if the actual source were read and showed otherwise. |
+| Use the `processItem` name (operator requested it) | Yes — `[L1]` | Would differ if the operator had said something different. |
+| Follows the module's existing error pattern (read from the file) | No | L0 — grounded in the project. |
+| Targets React 18 (not confirmed in `package.json`) | Yes — `[L3]` | Version claim from model memory; would differ if the lockfile were read. |
+
+<Note>
+Tagging is a signal, not enforcement. It makes provenance visible so the operator can review before persistence decisions. A tag on `[L3]` content does not prevent that content from being useful — it flags that verification or explicit approval is needed before the content becomes a permanent part of the project.
+</Note>
+
+---
+
+For the full layer taxonomy, see [Provenance Layers Overview](/layers/overview). For the rules that govern what happens when non-L0 content is found in a draft before it is persisted, see [Decontamination](/guides/decontamination).

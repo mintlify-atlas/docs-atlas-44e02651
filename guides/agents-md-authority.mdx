@@ -1,0 +1,50 @@
+---
+title: "AGENTS.md Authority: Classifying Instruction-Chain Preludes"
+sidebarTitle: "AGENTS.md Authority"
+description: "How Canon Boundary Guard identifies and classifies AGENTS.md instruction preludes so they are never mistaken for operator requests or project content."
+---
+
+In some Codex environments — particularly editor-integrated sessions — `AGENTS.md` instructions appear as a leading user-role message before the operator's real first request. Canon Boundary Guard includes a countermeasure for this case: a dedicated classification rule that recognises the block by its header shape and assigns it the correct authority layer before any later messages are interpreted.
+
+## The Problem
+
+The leading block may refer to the current working directory even when the actual instruction source is global — for example, an `AGENTS.md` stored in the Codex home directory rather than in the repository itself. Because the block is delivered over the conversation channel, its displayed role is `user`, which is the same role the operator uses for ordinary requests.
+
+The displayed conversational role is therefore not enough to decide authority. Treating the block as an ordinary user message would conflate operator-authored intent with agent-control guidance, and treating it as project content would risk persisting runtime instructions into repository files.
+
+## The Classification Rule
+
+A leading user-role block whose content begins with:
+
+```txt
+AGENTS.md instructions for <path>
+```
+
+is classified as **L2A** Codex instruction-chain material — not ordinary user chat and not repository content. The classification is determined by header shape and the referenced path, regardless of the displayed conversational role or the current filesystem state. Filesystem confirmation is not required before applying the authority layer.
+
+## What L2A Means
+
+L2A is the **Codex Instruction Chain** layer. From the SKILL.md definition:
+
+- **Global-scope guidance** comes from the Codex home directory (`AGENTS.override.md` or `AGENTS.md`).
+- **Project-scope guidance** comes from `AGENTS.override.md`, `AGENTS.md`, or configured fallback instruction files in the current repository path.
+- A message beginning with `AGENTS.md instructions for <path>` is runtime-delivered AGENTS guidance for the referenced path, even if displayed under the user role. Its source may be global-scope guidance from the Codex home directory or project-scope guidance for the repository.
+- After applying the prelude, read discoverable Codex-home instruction sources (`$CODEX_HOME`, or the platform default such as `%USERPROFILE%\.codex` / `~/.codex`) before treating instruction authority as closed.
+
+L2A guidance governs Codex behavior at its scope. It is not project content unless explicitly persisted into project files by the operator.
+
+## `environment_context` Blocks
+
+If the prelude contains an `<environment_context>...</environment_context>` block, that block is classified as **runtime metadata** — not operator-authored prose and not project evidence. It describes the execution environment at session start and carries no project authority.
+
+## Finding the First Operator Request
+
+The prelude must be classified retroactively as L2A before any later messages are interpreted. The classification is applied to the whole leading block, not only to the header line.
+
+The **first operator request** is the first user-role message that appears *after* the `AGENTS.md instructions for <path>` prelude. Nothing in the prelude counts toward operator intent for the current session task.
+
+<Warning>
+  Do not count an `AGENTS.md` prelude as the operator's first request. Do not classify it as project content, and do not classify it as ordinary user conversation. Apply the L2A authority layer before processing any later messages.
+</Warning>
+
+For the full layer taxonomy, see the [L2A section of the non-L0 layers reference](/layers/non-l0-layers) and the [concepts overview](/concepts).

@@ -1,0 +1,75 @@
+{
+  "projectType": "general",
+  "projectName": "Canon Boundary Guard",
+  "projectDescription": "A Codex plugin and skill that keeps project evidence, chat context, operator instructions, working hypotheses, and model assumptions in separate cognitive layers during an agentic session.",
+  "theme": "luma",
+  "primaryColor": "#536878",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "concepts"
+            ]
+          },
+          {
+            "group": "Provenance Layers",
+            "pages": [
+              "layers/overview",
+              "layers/l0-evidence",
+              "layers/non-l0-layers",
+              "layers/inline-tagging"
+            ]
+          },
+          {
+            "group": "Plugin Reference",
+            "pages": [
+              "reference/plugin-structure",
+              "reference/skill",
+              "reference/hook",
+              "reference/inject-frame-script"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/agents-md-authority",
+              "guides/dossier",
+              "guides/decontamination",
+              "guides/fallback-behavior"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Six-layer provenance classification system (L0–L3) for separating project evidence from chat, instructions, and model assumptions",
+    "Session-level cognitive-layer frame that stays active during reading, reasoning, planning, and writing",
+    "Optional PreToolUse hook that re-injects the compact classification frame before matched write tools (apply_patch, Write, Edit)",
+    "AGENTS.md authority countermeasure for correctly classifying runtime instruction-chain preludes",
+    "Inline tagging protocol ([L1], [L1A], [L2], [L2A], [L3]) for non-L0 content references",
+    "Dossier modes (A/B/C) for controlling how tightly provenance is documented before persistence",
+    "Decontamination checklist for detecting conversation residue, agent-control residue, version ghosts, and model-prior claims",
+    "Graceful fallback when the compact frame file is missing — fails visibly without blocking execution"
+  ],
+  "publicApiSurface": [
+    "codex plugin marketplace add XxYouDeaDPunKxX/canon-boundary-guard-codex",
+    "Use Canon Boundary Guard for this session.",
+    "Use $canon-boundary-guard for this session.",
+    "PreToolUse hook — matcher: apply_patch|Write|Edit",
+    "inject_frame.py — emits hookSpecificOutput.additionalContext and systemMessage",
+    "plugins/canon-boundary-guard-codex/.codex-plugin/plugin.json — plugin manifest",
+    "plugins/canon-boundary-guard-codex/hooks/hooks.json — hook configuration",
+    "plugins/canon-boundary-guard-codex/skills/canon-boundary-guard/SKILL.md — full operating frame",
+    "plugins/canon-boundary-guard-codex/skills/canon-boundary-guard/references/frame.md — compact frame",
+    "[features] hooks = true / plugin_hooks = true — Codex config keys"
+  ]
+}

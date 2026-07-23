@@ -1,0 +1,43 @@
+---
+title: "Fallback Behavior When the Frame File Is Missing"
+sidebarTitle: "Fallback Behavior"
+description: "What Canon Boundary Guard does when references/frame.md is absent — a visible degraded warning instead of a silent failure or a blocked execution."
+---
+
+Canon Boundary Guard is designed to fail visibly, not silently. If the compact frame file (`references/frame.md`) is missing when the hook runs, the injection script emits a degraded warning rather than crashing or passing through empty context. Normal work continues, but the absence of provenance protection is surfaced immediately rather than going unnoticed.
+
+## What Happens
+
+The `inject_frame.py` script catches the `FileNotFoundError` that occurs when `references/frame.md` cannot be read and substitutes the following message:
+
+```txt
+Canon Boundary Guard frame missing: provenance protection degraded.
+```
+
+This message is emitted in two places: as `hookSpecificOutput.additionalContext` (the model-visible context path for `PreToolUse`) and as a root-level `systemMessage`. Both channels are used so the failure remains visible in the UI or event stream without blocking execution of the matched write tool.
+
+## Why This Design
+
+The skill must not make ordinary work impossible because a local file is missing. A hard crash or a blocking error on every write tool invocation would be a worse outcome than degraded protection.
+
+At the same time, silent failure is not acceptable. If provenance protection is absent, the operator and the model both need to know. Emitting the degraded warning on both output channels ensures the failure is surfaced at exactly the moment it matters — before a write tool runs — rather than discovered after the fact.
+
+## Skill Activation Without the Hook
+
+The hook is optional. The full operating frame is defined in `SKILL.md` and is read by Codex when the skill is invoked at session start. Even if the hook never runs — because hooks are disabled in the Codex config, because `references/frame.md` is missing, or because the hook has not yet been trusted — the skill itself remains active from session start.
+
+The hook is a reinforcement point: it re-surfaces the compact frame from `references/frame.md` immediately before matched write tools (`apply_patch`, `Write`, `Edit`). It does not replace full skill activation. If the hook is absent or degraded, the classification frame established at session start continues to govern provenance decisions.
+
+## Recovery
+
+To restore full protection:
+
+1. Ensure `references/frame.md` exists in the installed plugin directory at `${PLUGIN_ROOT}/skills/canon-boundary-guard/references/frame.md`.
+2. If the file was accidentally deleted, reinstall the plugin from the repository or restore the file from source control.
+3. After restoring the file, restart Codex so the hook picks up the corrected path.
+
+<Info>
+  Plugin hooks are non-managed hooks. They do not run until explicitly trusted — either through the hook review UI at `/hooks` in Codex, or via the trust prompt that appears in editor integrations when the plugin is first loaded.
+</Info>
+
+For the full hook configuration and the JSON payload the script emits, see the [hook reference](/reference/hook). For a detailed walkthrough of the injection script itself, see the [inject_frame.py script reference](/reference/inject-frame-script).

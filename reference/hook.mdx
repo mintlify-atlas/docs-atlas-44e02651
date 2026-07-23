@@ -1,0 +1,93 @@
+---
+title: "PreToolUse Hook: Frame Injection at Write Time"
+sidebarTitle: "Hook"
+description: "Reference for the Canon Boundary Guard PreToolUse hook: what it matches, what it injects, how to enable it, and the limits of hook-based enforcement in Codex."
+---
+
+The Canon Boundary Guard PreToolUse hook re-surfaces the compact classification frame from `references/frame.md` immediately before matched write tools execute. It does not block the tool call, rewrite the requested operation, or decide project policy. Its sole job is to put the provenance classification layer back into the instruction stream at the moment a write may happen.
+
+## Hook Configuration
+
+The hook is defined in `plugins/canon-boundary-guard-codex/hooks/hooks.json`. The full contents of that file are shown below.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "apply_patch|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${PLUGIN_ROOT}/skills/canon-boundary-guard/scripts/inject_frame.py",
+            "timeout": 5,
+            "statusMessage": "Provenance frame"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Field breakdown:
+
+- **`matcher`** — a pipe-separated pattern that targets the `apply_patch`, `Write`, and `Edit` tools. The hook fires before any tool whose name matches one of these values.
+- **`type`** — `"command"` instructs Codex to run the value of `command` as a subprocess.
+- **`command`** — the Python script path, using `${PLUGIN_ROOT}` as a runtime-resolved variable pointing to the installed plugin directory.
+- **`timeout`** — the hook runner will wait at most `5` seconds for the script to complete before proceeding without its output.
+- **`statusMessage`** — `"Provenance frame"` is the label shown in the Codex UI or event stream while the hook is running.
+
+## Enabling the Hook
+
+Plugin-bundled hooks are off by default. To enable them, add the following to your Codex `config.toml`:
+
+```toml
+[features]
+hooks = true
+plugin_hooks = true
+```
+
+After saving, restart Codex. Use `/hooks` to review and trust the bundled hook in UIs that support it. In editor integrations where `/hooks` is not available, approve the hook when Codex shows the trust prompt.
+
+<Note>
+  Plugin hooks are non-managed hooks and do not run until trusted. Restarting Codex after enabling the feature flags is required for the change to take effect.
+</Note>
+
+## What the Hook Injects
+
+The hook script emits a JSON object to stdout. Codex reads two fields from that object:
+
+- **`hookSpecificOutput.additionalContext`** — the model-visible context path for `PreToolUse`. The contents of `frame.md` are injected here, making them available to the model before the write tool executes.
+- **`systemMessage`** — a root-level field that makes the hook activity visible in the UI or event stream, independent of whether the model-visible path is surfaced in the UI.
+
+The payload shape is:
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "additionalContext": "<contents of frame.md>"
+  },
+  "systemMessage": "<contents of frame.md>"
+}
+```
+
+Both fields carry the same content: the stripped text of `references/frame.md`. The duplication is intentional — `additionalContext` targets the model; `systemMessage` targets the operator-facing UI.
+
+<Warning>
+  In current Codex runtimes, some edits may be applied through internal file-change paths that do not expose a visible hook event. Treat the hook as a best-effort reinforcement layer, not as complete enforcement.
+</Warning>
+
+<Note>
+  If your system requires `python3` instead of `python`, adjust the hook command in your local plugin copy or configure an equivalent hook in your Codex `config.toml`.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="inject_frame.py Reference" icon="code" href="/reference/inject-frame-script">
+    Source walkthrough, output shape, and fallback behavior of the hook injection script.
+  </Card>
+  <Card title="Fallback Behavior" icon="shield-exclamation" href="/guides/fallback-behavior">
+    What happens when the frame file is missing or the hook cannot run.
+  </Card>
+</CardGroup>

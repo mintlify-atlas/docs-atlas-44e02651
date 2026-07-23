@@ -1,0 +1,56 @@
+---
+title: "The Dossier Protocol: Documenting Provenance Before Writes"
+sidebarTitle: "Dossier"
+description: "Canon Boundary Guard's three dossier modes — mechanical edit, semantic edit, and promotion — and when each requires a provenance record before writing."
+---
+
+The dossier protocol controls how rigorously Canon Boundary Guard documents provenance before writing persistent content. Three modes escalate from silent to full documentation, keyed to how much non-L0 material is involved in the proposed change. The mode is not a style choice — it is determined by the source class of the content being written.
+
+## Mode A — Mechanical Edit
+
+Mode A applies to edits with clear **L0 provenance**: the change is a direct consequence of what is already in project files, and no conversation material or model assumptions are being introduced.
+
+No dossier is required. The edit can proceed as soon as the L0 evidence is confirmed.
+
+**Example:** Renaming a function that appears under that exact name in existing project files — the new name comes from a refactor instruction pointing to verifiable source locations.
+
+## Mode B — Semantic Edit
+
+Mode B applies to edits that **reorganize existing evidence** — restructuring, reordering, or combining material that is already grounded in L0, but where the shape of the output reflects interpretation rather than pure transcription.
+
+A compact dossier is required before writing. The compact dossier documents which L0 sources support the edit and notes any interpretation choices made.
+
+**Example:** Restructuring a module's public API based on the patterns visible in existing tests — the tests are L0, but the reorganization reflects a semantic judgment about the intended interface.
+
+## Mode C — Promotion
+
+Mode C applies to promoting **L1 (conversation material)** or **L3 (model assumptions)** into persistent project content. This is the highest-risk write class, because the source material has no independent project authority.
+
+A full dossier is required, and execution must stop before writing so the operator can review and explicitly approve the change.
+
+**Example:** Writing a design decision into a `DECISIONS.md` file based on a conclusion reached during the current conversation — the conclusion is L1 and requires operator approval before it becomes a permanent record.
+
+### Full Dossier Format
+
+```txt
+Target:
+Mode:
+Evidence:
+Authorized delta:
+Rejected shaping:
+Rejected model prior:
+Conflicts:
+Decision needed:
+```
+
+Write `none` when a field is empty. Do not invent rejected items in order to appear thorough — leave the field blank if nothing was rejected.
+
+<Note>
+  A full dossier is not bureaucracy. It is the mechanism that makes L1 and L3 promotion visible so the operator can make an informed decision before anything is written permanently into the project.
+</Note>
+
+<Warning>
+  Do not complete a Mode C write without explicit operator approval. Surface the full dossier first and wait for a clear go-ahead before proceeding with the write.
+</Warning>
+
+For the layer definitions that determine which mode applies, see the [layers overview](/layers/overview). For the checklist that runs before any persistent write, see the [decontamination guide](/guides/decontamination).

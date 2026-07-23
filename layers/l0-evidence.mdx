@@ -1,0 +1,48 @@
+---
+title: "L0 Evidence: Ground Truth in Codex Sessions"
+sidebarTitle: "L0 Evidence"
+description: "What qualifies as L0 evidence in a Canon Boundary Guard session, how it is treated at write time, and how conflicts must be handled."
+---
+
+L0 is the only provenance layer that can become persistent project content without explicit operator approval. It represents verified, persistent evidence that exists independently of the current conversation — things the project already knows because they are on disk, in version control, or confirmed by tool output during the current task. Everything else in the taxonomy is measured against L0: when non-L0 material wants to enter the repository, L0 is the standard it must meet or the operator must explicitly override.
+
+## What Qualifies as L0
+
+L0 EVIDENCE covers material that is already grounded in the project or has been directly verified during the session:
+
+- **Project files** — source code, configuration, documentation, and any other file present in the repository.
+- **Git state** — commit history, branch state, diffs, and anything else confirmed from version control.
+- **Tests** — existing test files and the results of running them during the current task.
+- **Schemas** — schema files present on disk, not schema shapes assumed from model knowledge.
+- **Lockfiles** — dependency lockfiles as they actually exist, not assumed or reconstructed versions.
+- **Diagnostics** — compiler output, linter results, type-checker output, and similar tool feedback produced during the session.
+- **Command output** — the actual output of commands run during the current task.
+- **Verified tool output** — output from tools invoked during the session whose results have been confirmed.
+
+The common thread is verification against something that exists outside the model's memory. A file you have read is L0. A file you believe exists but have not read is L3 until confirmed.
+
+## The Core Rule
+
+From `SKILL.md`:
+
+> Preserve or reorganize L0. Do not mix L0 with L1/L3 when producing content.
+
+This rule has two parts. The first — preserve or reorganize — means L0 is the baseline. Mechanical edits that stay entirely within confirmed evidence are the safest class of operation. The second — do not mix — means that when output draws on both verified evidence and unverified assumptions or conversation material, the non-L0 portions must be tagged or surfaced rather than blended invisibly into the result.
+
+## Persistence Without Approval
+
+L0 is the only layer where persistence does not require explicit operator sign-off. When you write confirmed project content back to the repository, you are working within L0. The persistence rules that govern L1, L1A, L2, L2A, and L3 do not apply because the material is already grounded.
+
+This also means that claiming something is L0 when it is not carries real consequences. If a claim about project structure, a version number, or a file path comes from model memory rather than from reading the actual file, it is L3 — not L0 — until verified.
+
+## Handling Conflicts
+
+When L0 evidence conflicts with other L0 evidence — for example, two files that make contradictory claims about the same interface — the rule from `SKILL.md` is direct:
+
+> If evidence conflicts, stop and report. Do not resolve by recency, confidence, or intuition.
+
+Do not pick the more recent file. Do not pick the one that matches a prior belief. Do not resolve the conflict based on how confident the model is about one side. Surface the conflict and let the operator decide.
+
+<Warning>
+L0 claims that come from model memory are not L0 — they are L3 until verified against actual project artifacts. If you have not read the file, run the command, or confirmed the tool output during this session, the claim is a model prior regardless of how certain it feels. Tag it `[L3]` and verify before treating it as ground truth.
+</Warning>

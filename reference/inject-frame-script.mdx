@@ -1,0 +1,83 @@
+---
+title: "inject_frame.py: Hook Injection Script Reference"
+sidebarTitle: "inject_frame.py"
+description: "Reference for the inject_frame.py hook script: how it locates frame.md, what JSON it emits to Codex, and its graceful fallback when the frame file is missing."
+---
+
+`inject_frame.py` is intentionally small. It reads `references/frame.md` from the skill root, strips surrounding whitespace, and emits a single JSON object to stdout for the Codex `PreToolUse` hook runner to consume. There is no configuration, no external dependency beyond the Python standard library, and no side effects other than that print statement.
+
+## Source
+
+The complete script as it exists in `scripts/inject_frame.py`:
+
+```python
+#!/usr/bin/env python3
+import json
+import pathlib
+import sys
+
+skill_dir = pathlib.Path(__file__).resolve().parents[1]
+frame_path = skill_dir / "references" / "frame.md"
+
+sys.stdin.read()
+
+try:
+    frame_text = frame_path.read_text(encoding="utf-8")
+except FileNotFoundError:
+    frame_text = "Canon Boundary Guard frame missing: provenance protection degraded."
+
+output = {
+    "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "additionalContext": frame_text.strip()
+    },
+    "systemMessage": frame_text.strip()
+}
+
+print(json.dumps(output))
+```
+
+Key details:
+
+- **`sys.stdin.read()`** — Codex hook runners pipe the tool invocation context to the script's stdin. This call consumes that input as expected by the runner without using it. Omitting it can cause the runner to stall waiting for the pipe to be drained.
+- **`skill_dir`** — resolved by walking two levels up from `__file__` using `.parents[1]`. Because the script lives at `skills/canon-boundary-guard/scripts/inject_frame.py`, `parents[1]` resolves to the `canon-boundary-guard/` skill root. This path is stable regardless of where the plugin is installed, because it is always computed relative to the script itself.
+- **`frame_path`** — always `references/frame.md` relative to the skill root. The script does not accept arguments and does not read environment variables to locate the frame.
+- **`print(json.dumps(output))`** — the entire output is a single JSON object printed to stdout on one line. Codex reads stdout from the hook process to extract the payload.
+
+## Output Shape
+
+The script produces a JSON object with two fields. Both carry the same content — the stripped text of `frame.md` — but they serve different purposes inside Codex:
+
+- **`hookSpecificOutput.additionalContext`** — the model-visible context path for `PreToolUse`. Content placed here is injected into the model's instruction stream before the matched write tool executes. This is the primary mechanism by which the classification frame reaches the model at write time.
+- **`systemMessage`** — a root-level field that surfaces the hook activity in the Codex UI or operator event stream. This makes hook execution visible to the operator even in runtimes where `additionalContext` is not separately displayed.
+
+<Info>
+  The two fields are not redundant from a routing perspective. `additionalContext` targets the model; `systemMessage` targets the UI. Both are populated so that the frame is visible in both places.
+</Info>
+
+## Fallback
+
+If `references/frame.md` cannot be found at the expected path, the `FileNotFoundError` is caught and `frame_text` is set to a fixed message instead of raising an exception:
+
+```txt
+Canon Boundary Guard frame missing: provenance protection degraded.
+```
+
+This message is emitted through the same JSON output shape, populating both `additionalContext` and `systemMessage`. The effect is that:
+
+- The hook runner receives a valid JSON payload and does not error.
+- The model sees a degraded-frame notice in its instruction stream rather than nothing.
+- The operator sees the same message in the UI event stream, making the missing file visible without blocking the write operation.
+
+<Warning>
+  The fallback keeps execution unblocked by design. A missing `frame.md` does not prevent Codex from writing files — it only degrades the reinforcement layer. If provenance separation is critical for your session, verify that `frame.md` is present before relying on the hook.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Hook Reference" icon="webhook" href="/reference/hook">
+    Full documentation for the PreToolUse hook configuration, enabling, and what it injects.
+  </Card>
+  <Card title="Fallback Behavior" icon="shield-exclamation" href="/guides/fallback-behavior">
+    Broader guide to what Canon Boundary Guard does when components are missing or hooks are disabled.
+  </Card>
+</CardGroup>

@@ -1,0 +1,67 @@
+---
+title: "How Canon Boundary Guard Works"
+sidebarTitle: "Concepts"
+description: "The cognitive-layer separation model behind Canon Boundary Guard: what each provenance layer means, where the persistence boundary sits, and how the hook reinforces it."
+---
+
+In an agentic Codex session, multiple information sources are present at the same time — project files, conversation history, runtime instructions, tool output, model assumptions, and operator-approved changes. These sources do not carry the same authority, but nothing in the default runtime distinguishes between them. A chat message looks the same as a confirmed design decision. A model assumption about a framework convention looks the same as a verified fact in a project file. An AGENTS.md instruction looks like an ordinary user message. Canon Boundary Guard exists to make those distinctions visible and keep them visible throughout the session, not only at the moment a file is written.
+
+## Cognitive-Layer Separation
+
+The frame Canon Boundary Guard establishes is not purely a write guard. It is a session-level operating posture that should affect how Codex reads material, performs analysis, forms plans, detects conflicts, and decides what to persist.
+
+When the frame is active, every piece of information in the session carries an implicit provenance classification. That classification changes how the material should be treated:
+
+- **Reading**: material from conversation or model priors should not be treated as confirmed project evidence, even when it sounds authoritative.
+- **Analysis**: if a conclusion depends on non-L0 material, the dependency should be visible so the operator can judge whether to accept it.
+- **Planning**: proposals based on conversation context or assumed conventions should be tagged, not written as though they were grounded in project files.
+- **Conflict detection**: when L0 evidence and non-L0 material say different things, Canon Boundary Guard surfaces the conflict rather than resolving it silently by recency, confidence, or intuition.
+- **Persistence decisions**: promoting any material from context into a persistent file is a deliberate act that should happen only when provenance is clear and the operator has approved it.
+
+The compact frame in `references/frame.md` summarizes this posture in a form that can be re-surfaced by the hook at write time.
+
+## What Codex Works With
+
+Codex operates across several kinds of information simultaneously. Understanding what each kind is — and what authority it carries — is the foundation of the Canon Boundary Guard model.
+
+| Source | Examples | Authority |
+|---|---|---|
+| **Project files** | Source code, schemas, lockfiles, test suites, git state, diagnostics | Highest — verified, persistent evidence |
+| **Conversation history** | Messages from the current thread, prior turns, user requests | Present in context; not automatically a project decision |
+| **Runtime context** | Session start block, environment metadata | Describes the runtime; not project content |
+| **Operator instructions** | AGENTS.md guidance, behavioral constraints, reminders to the agent | Governs agent behavior; not repository content |
+| **Compressed summaries** | Summaries of earlier context after compaction | Derivative; may not reflect current project state |
+| **Model assumptions** | Assumed framework conventions, version claims, best-practice patterns not grounded locally | Unverified; must not be silently promoted to evidence |
+
+None of these sources is inherently untrustworthy. The problem is not that conversation or model assumptions are unreliable — it is that they are treated as interchangeable with project evidence when they should not be.
+
+## The Persistence Boundary
+
+The most important boundary in the Canon Boundary Guard model is the one between material that belongs in the repository and material that should stay in context.
+
+The six provenance layers define that boundary precisely:
+
+- **L0 EVIDENCE** is what gets preserved. It is project files, git state, tests, schemas, lockfiles, diagnostics, and verified tool output from the current task. L0 is the ground layer.
+- **L1 SHAPING** is conversation material — messages, hypotheses, discussion — that is present in context but has not been approved for persistence. It can shape how Codex responds, but it should not silently become a file.
+- **L1A AUTHORIZED DELTA** is conversation material that the operator has explicitly approved for persistence in the current turn. It becomes evidence only after it is actually written to a persistent artifact, and only within the scope the operator approved.
+- **L2 AGENT CONTROL** is instructions given to the agent to shape its behavior — reminders, steering, constraints. This is not project content. It persists only if the operator explicitly requests agent-facing operating instructions.
+- **L2A CODEX INSTRUCTION CHAIN** is AGENTS.md guidance and runtime instruction-chain material loaded by Codex. It governs how Codex behaves at its scope. A leading user-role message that begins with `AGENTS.md instructions for <path>` is L2A material regardless of its displayed conversational role. It is not project content and should not be treated as an ordinary user request.
+- **L3 MODEL PRIOR** is unverified model memory, generic best-practice claims, assumed framework behavior, or version references not grounded in local evidence. It does not persist unless it is verified against L0 or explicitly approved by the operator.
+
+The persistence boundary sits between L0 on one side and L1, L2, L2A, and L3 on the other. Those layers can all shape how Codex works within a session, but they should not drift into repository content without an explicit, acknowledged operator decision.
+
+See [Layers Overview](/layers/overview) for the full layer taxonomy, inline-tagging format, and the dossier protocol used when promoting non-L0 material.
+
+## The Hook as a Reinforcement Layer
+
+The `PreToolUse` hook bundled with the plugin is triggered before matched write tools — specifically `apply_patch`, `Write`, and `Edit`. When it fires, the hook script reads the compact frame from `references/frame.md` and emits it in two places: as `hookSpecificOutput.additionalContext` (the model-visible context path for `PreToolUse`) and as a root-level `systemMessage` so the event is visible in the UI or event stream.
+
+The hook's role is narrow and deliberate. It does not block the tool call. It does not rewrite the requested operation. It does not decide project policy or enforce any specific outcome. Its only job is to put the classification frame back into the instruction stream at the moment a write may happen — so that the layer separation established at session start is still present and visible when Codex is about to touch persistent content.
+
+This matters because an agentic session can be long. Context compacts, earlier instructions fade, and the provenance distinctions established at activation may no longer be salient by the time a write tool fires. The hook is the mechanism that re-surfaces them.
+
+<Info>
+  In current Codex runtimes, some edits may be applied through internal file-change paths that do not expose a visible `PreToolUse` hook event. The hook should be treated as a best-effort reinforcement layer, not as complete enforcement. The primary protection is the session-level operating frame activated at the start of the session, not the hook alone.
+</Info>
+
+If `references/frame.md` is missing when the hook fires, the script emits a fallback `systemMessage` — `Canon Boundary Guard frame missing: provenance protection degraded.` — so the degraded state is visible without blocking execution.

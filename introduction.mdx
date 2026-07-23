@@ -1,0 +1,55 @@
+---
+title: "Canon Boundary Guard: Provenance Frame for Codex"
+sidebarTitle: "Introduction"
+description: "What Canon Boundary Guard is, why information-source authority matters in agentic sessions, and how the plugin's layers and hook keep project content safe."
+---
+
+Canon Boundary Guard is a Codex plugin that packages a provenance-boundary skill and an optional lifecycle hook. During an agentic session, Codex works with several kinds of information simultaneously — files already in the project, messages from the current conversation, runtime instructions, tool output, compressed summaries, and assumptions that come from the model itself. Those sources do not have the same authority, yet nothing in the default Codex runtime draws a hard line between them. A chat message can silently drift into a commit. A model assumption can be treated as confirmed evidence. An AGENTS.md instruction can be mistaken for repository content. Canon Boundary Guard gives Codex a compact classification frame so those boundaries stay visible while it reads, reasons, plans, and eventually writes persistent project content.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Install the plugin, enable the hook, and activate the frame in a new session in a few steps.
+  </Card>
+  <Card title="Concepts" icon="layer-group" href="/concepts">
+    Understand cognitive-layer separation, the persistence boundary, and how the hook reinforces the frame.
+  </Card>
+  <Card title="Layers Overview" icon="list-tree" href="/layers/overview">
+    Full taxonomy of all six provenance layers and the rules that govern them.
+  </Card>
+  <Card title="Plugin Structure" icon="folder-open" href="/reference/plugin-structure">
+    How the plugin manifest, skill, hook script, and compact frame file fit together.
+  </Card>
+</CardGroup>
+
+## The Core Idea: Boundary Visibility Protects Project Content
+
+The goal of Canon Boundary Guard is not simply to block bad writes. It is to keep the classification frame active throughout the entire session — while Codex reads files, interprets instructions, runs tools, forms hypotheses, and decides what to persist.
+
+When the frame is active, Codex knows which material comes from verified project evidence and which comes from conversation, instructions, or unverified model memory. That distinction matters most at the moment something transitions from temporary context into a persistent file. Without the frame, the transition can happen silently, carrying conversation residue, model assumptions, or agent-control language directly into repository content.
+
+Canon Boundary Guard keeps that boundary visible so any promotion from context to persistence is a deliberate, acknowledged act rather than an accidental side effect of an agentic turn.
+
+## The Six Provenance Layers
+
+Canon Boundary Guard organizes every information source in a Codex session into one of six layers. The layers do not decide whether something is true. They describe where material came from and whether it can safely become persistent project content.
+
+| Layer | Label | What it covers |
+|---|---|---|
+| L0 | EVIDENCE | Project files, git state, tests, schemas, lockfiles, diagnostics, verified tool output |
+| L1 | SHAPING | Conversation material not approved for persistence |
+| L1A | AUTHORIZED DELTA | Operator-approved material for the current turn, before it is written |
+| L2 | AGENT CONTROL | Instructions that shape agent behavior, not project content |
+| L2A | CODEX INSTRUCTION CHAIN | AGENTS guidance and runtime instruction-chain material |
+| L3 | MODEL PRIOR | Unverified model memory, assumed conventions, generic best practice |
+
+The key rule is that L1, L2, L2A, and L3 can shape how Codex works in a session but should not silently become repository content. Only L0 is preserved without an explicit operator decision. L1A can be written, but only within the scope the operator has explicitly approved.
+
+See [Layers Overview](/layers/overview) for the full taxonomy, inline-tagging rules, and the dossier format used when promoting non-L0 material.
+
+## The Optional Hook
+
+The plugin bundles a `PreToolUse` hook that fires before matched write tools (`apply_patch`, `Write`, `Edit`). When triggered, the hook script reads the compact classification frame from `references/frame.md` and emits it as `hookSpecificOutput.additionalContext` — the model-visible context path for `PreToolUse` — and also as a `systemMessage` so the event is visible in the UI.
+
+The hook does not block the tool call, rewrite the requested operation, or decide project policy. Its job is narrow: put the classification frame back into the instruction stream at the moment a write may happen, so that the layer separation established at session start is still present at the point where it matters most.
+
+The hook is recommended for any session where repository content, project rules, or AGENTS.md authority may be relevant, but the skill works without it. Full installation and configuration details are in [Quickstart](/quickstart).

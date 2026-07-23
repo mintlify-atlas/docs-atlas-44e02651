@@ -1,47 +1,81 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Canon Boundary Guard"
+sidebarTitle: "Quickstart"
+description: "Install the Canon Boundary Guard Codex plugin, enable the PreToolUse hook, and activate the provenance frame in a new session in a few minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+This guide walks through adding Canon Boundary Guard to Codex, enabling the optional `PreToolUse` hook, and starting your first session with the provenance frame active. The whole process takes a few minutes. The hook is optional but recommended for sessions where repository content, project rules, or AGENTS.md authority may matter.
 
 ## Prerequisites
 
-Before you begin, you must have:
+- Codex is installed and running on your machine.
+- You have access to the Codex plugin marketplace or can add plugins by repository URL.
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+## Installation
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Add the repository to Codex">
+    Run the following command to register the plugin repository with Codex:
 
-    ```bash
-    npm install your-package
+    ```txt
+    codex plugin marketplace add XxYouDeaDPunKxX/canon-boundary-guard-codex
     ```
+
+    This makes the plugin available in your local Codex plugin list.
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
-    ```bash
-    your-cli init
+  <Step title="Install or enable the plugin">
+    Open Codex and navigate to the plugin picker or plugin list. In Codex UIs that support slash commands, open it with:
+
+    ```txt
+    /plugins
     ```
+
+    Find **Canon Boundary Guard** in the list and install or enable it.
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
+  <Step title="Start a new thread and activate the frame">
+    Start a new thread and ask Codex to use the plugin:
+
+    ```txt
+    Use Canon Boundary Guard for this session.
     ```
+
+    You can also invoke the bundled skill directly by name:
+
+    ```txt
+    Use $canon-boundary-guard for this session.
+    ```
+
+    When the skill activates, Codex reads the full `SKILL.md` before responding and adopts the provenance frame silently for the rest of the session. No confirmation message is required.
+  </Step>
+
+  <Step title="Enable the hook (recommended)">
+    The bundled `PreToolUse` hook re-surfaces the compact classification frame before matched write tools. To enable it, add the following to your Codex `config.toml`:
+
+    ```toml
+    [features]
+    hooks = true
+    plugin_hooks = true
+    ```
+
+    Then restart Codex. Plugin-bundled hooks are off by default and do not run until trusted.
+
+    - If your Codex UI exposes a hook review view, open it with `/hooks` to review and trust the bundled hook.
+    - In editor integrations where `/hooks` is not available, open the plugin details or approve the hook when Codex shows the trust prompt.
+
+    The hook fires for `apply_patch`, `Write`, and `Edit` tool calls. It emits the frame as model-visible context and as a `systemMessage` in the UI. It does not block or rewrite any operation.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+<Note>
+  The hook is recommended for sessions where repository content, project rules, naming conventions, workflows, or AGENTS.md authority may be relevant. The skill works without it — the hook is a reinforcement point, not the core mechanism.
+</Note>
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+<Tip>
+  If your system uses `python3` instead of `python`, the default hook command will not resolve correctly. Adjust the `command` field in the hook definition inside your local plugin copy, or configure an equivalent hook in your Codex `config.toml`.
 </Tip>
+
+## Standalone Skill Alternative
+
+If you prefer not to use the plugin system, the older standalone skill layout is preserved in the `standalone-skill-v1` branch of the repository. Check out that branch and copy the `canon-boundary-guard/` folder into your Codex skills directory. Note that the hook is not available in the standalone layout — you would need to configure it manually.

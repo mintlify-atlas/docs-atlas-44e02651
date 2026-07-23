@@ -1,0 +1,77 @@
+---
+title: "Decontamination: Removing Residue Before Persistence"
+sidebarTitle: "Decontamination"
+description: "The Canon Boundary Guard decontamination checklist — four residue categories to flag before any content is written permanently into project files."
+---
+
+Before persisting any content, Canon Boundary Guard requires checking for contamination — material that originated in conversation, agent control, or model assumptions and that would be wrong or misleading if written permanently into project files. Contamination is not always obvious: it often appears as natural-sounding phrasing that carries an implicit source claim the project cannot support.
+
+## Residue Categories
+
+### Conversation Residue (L1)
+
+Language that references the current conversation rather than the project itself. If a phrase only makes sense because of what was said in this session, it is L1 residue.
+
+Patterns to flag:
+
+- "as discussed"
+- "as said before"
+- "from the previous session"
+- "come detto prima"
+- "come discusso"
+- "l'utente vuole"
+
+### Agent-Control Residue (L2)
+
+Language that was written to steer agent behavior rather than to describe project state. Instructions and reminders addressed to the agent do not belong in project files.
+
+Patterns to flag:
+
+- "remember to"
+- "I should"
+- "ricordati"
+- "devo"
+- "non devo"
+- Temporary instructions written to the agent during the session
+
+### Version Ghosts (L3)
+
+Version references that are not present in L0 — not found in project files, lockfiles, diagnostics, or verified command output from the current task. A version number that comes from model memory rather than from the repository is a version ghost.
+
+### Model-Prior Claims (L3)
+
+Language that asserts convention, standard practice, or typicality without grounding in project evidence. These phrases import the model's training distribution into project content.
+
+Patterns to flag:
+
+- "best practice"
+- "standard approach"
+- "recommended"
+- "modern convention"
+- "industry standard"
+- "normally"
+- "usually"
+
+## When Residue Is Allowed
+
+Residue in any of the above categories may appear in persistent content only when at least one of the following conditions holds:
+
+- **Grounded in L0** — the project files, lockfiles, or diagnostics actually support the claim. For example, a version reference is allowed if that version appears in `package.json` or a lockfile.
+- **Explicitly approved as L1A** — the operator has approved the conversation material for persistence in this specific turn.
+- **Intentionally written in a historical or migration context** — the content is documenting past state or a transition, and the residue is accurate in that framing.
+
+## Practical Example
+
+The following flag format marks a version ghost before it reaches a persistent file:
+
+```txt
+[L3] Requires Node.js 18+ (not confirmed in lockfiles or package.json — verify before persisting)
+```
+
+The tag makes the unverified claim visible to the operator without blocking the draft. It can be promoted to clean content once the version is confirmed in L0, or removed if it cannot be confirmed.
+
+<Tip>
+  Run through the decontamination checklist before every Mode B or Mode C write. For Mode A, a quick scan is still good practice — residue phrases can slip into mechanical edits through copied comments or docstrings.
+</Tip>
+
+For the dossier fields that capture rejected material, see the [dossier protocol](/guides/dossier). For the inline tag syntax used when flagging residue in draft content, see the [inline tagging reference](/layers/inline-tagging).

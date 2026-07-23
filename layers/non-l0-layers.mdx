@@ -1,0 +1,123 @@
+---
+title: "L1 through L3: Non-Evidence Provenance Layers"
+sidebarTitle: "Non-L0 Layers"
+description: "Definitions, persistence rules, and usage notes for the L1, L1A, L2, L2A, and L3 provenance layers in Canon Boundary Guard sessions."
+---
+
+The five non-L0 layers exist because Codex works with more than project files. During any session, the model also draws on conversation history, operator instructions, runtime guidance, and its own trained assumptions. These sources are not interchangeable with verified project evidence, and they do not all carry the same authority. The non-L0 layers give each source class a name and a persistence rule so that the boundary between what already belongs in the repository and what merely shapes the current session stays visible throughout the work.
+
+The shared constraint across all five layers is the same: non-L0 material can influence Codex behavior, but it must not silently enter persistent project content. The specific rules differ by layer.
+
+<Accordion title="L1 SHAPING">
+
+**Definition**
+
+Conversation material not explicitly approved as a durable project decision. L1 material is present in context and can inform how Codex reasons, but it has not been reviewed or authorized as something that should outlast the session.
+
+**Examples**
+
+- A clarification the operator gave earlier in the conversation ("use snake_case for this file").
+- A working hypothesis that emerged mid-session ("it seems like the auth module owns this").
+- Interim conclusions drawn from conversation, not from reading files.
+
+**Persistence rule**
+
+L1 does not persist.
+
+If L1 material needs to enter the repository — for example, if the operator's naming preference should be recorded in a style guide — the operator must explicitly approve it, at which point it becomes L1A for the current turn.
+
+</Accordion>
+
+<Accordion title="L1A AUTHORIZED DELTA">
+
+**Definition**
+
+Conversation material the operator has explicitly approved for persistence in this turn. L1A is L1 that has been promoted by operator approval. It becomes evidence only after it has been written to a persistent artifact; until that write happens, it is still pending.
+
+**Examples**
+
+- A new function signature the operator has approved adding to the codebase.
+- A documentation update the operator has explicitly requested.
+- A configuration change the operator has reviewed and confirmed.
+
+**Persistence rule**
+
+Write L1A only within the explicitly approved scope.
+
+The approval is specific to a turn and a scope. If the operator approves adding a section to one file, that approval does not extend to other files. Once written, the artifact becomes L0.
+
+</Accordion>
+
+<Accordion title="L2 AGENT CONTROL">
+
+**Definition**
+
+Instructions, steering, reminders, or constraints given to the agent to shape its behavior. L2 material is not project content — it is guidance about how the agent should work, not what the project should contain.
+
+**Examples**
+
+- "Be concise in your responses for this session."
+- "Check for type errors before writing."
+- A reminder to follow a particular workflow during the current task.
+
+**Persistence rule**
+
+L2 does not persist unless explicitly requested as agent-facing instruction.
+
+If the operator wants agent-control material to become a persistent artifact — for example, adding it to an `AGENTS.md` file as a standing instruction — that is an explicit request. Without such a request, L2 stays in the session and does not enter the repository.
+
+</Accordion>
+
+<Accordion title="L2A CODEX INSTRUCTION CHAIN">
+
+**Definition**
+
+AGENTS guidance loaded by Codex from the instruction chain is agent-control authority. Treat AGENTS.md guidance as an active behavioral contract for the agent, not as project content or an ordinary user message.
+
+Global-scope guidance comes from the Codex home directory (`AGENTS.override.md` or `AGENTS.md`). Project-scope guidance comes from `AGENTS.override.md`, `AGENTS.md`, or configured fallback instruction files in the current repository path.
+
+**Special classification rule**
+
+A message whose content begins with `AGENTS.md instructions for <path>` is runtime-delivered AGENTS guidance for the referenced path, even if it is displayed under the user role. It is L2A by its header shape — not by its displayed conversational role, not by filesystem confirmation. When this block appears as a leading conversation prelude, classify it retroactively as L2A before interpreting later messages. The first operator request starts after this prelude.
+
+**Examples**
+
+- The AGENTS.md file loaded by Codex at session start.
+- A leading user-role block beginning with `AGENTS.md instructions for /path/to/repo`.
+- Runtime environment metadata inside an `<environment_context>` block within an AGENTS prelude.
+
+**Persistence rule**
+
+L2A governs agent behavior and does not persist into project content unless explicitly requested.
+
+L2A guidance is not project content. Do not classify it as an ordinary user message, do not treat it as operator-authored prose, and do not write it into repository files unless the operator explicitly requests that an agent-facing instruction artifact be created.
+
+</Accordion>
+
+<Accordion title="L3 MODEL PRIOR">
+
+**Definition**
+
+Unverified model memory, generic best practice, assumed framework behavior, version claim, or unstated convention not grounded in local evidence.
+
+L3 covers everything the model brings to the session from training rather than from reading the project. It includes version numbers the model believes to be current, framework conventions the model assumes are in use, and best-practice recommendations that have not been verified against what the project actually does.
+
+**Examples**
+
+- "React 18 introduced concurrent rendering" — a version claim not verified in the project's `package.json`.
+- "The standard pattern for this is X" — a generic best-practice claim not grounded in L0.
+- An assumed file path or module name that has not been confirmed by reading the repository.
+
+**Persistence rule**
+
+L3 does not persist unless verified or operator-approved.
+
+If a version claim is confirmed against the lockfile, it graduates to L0. If a convention is confirmed against project files, it graduates to L0. If the operator explicitly approves a best-practice recommendation for inclusion in documentation, it becomes L1A for that turn. Without one of these, L3 stays tagged and out of persistent content.
+
+</Accordion>
+
+<Tip>
+Non-L0 material is tagged only when the output would change if the source were different. A passing reference to a concept that is universally true does not need a tag. A version number, a naming convention, a behavioral claim, or a rule that comes from a specific source — and would be different if that source were different — does.
+</Tip>
+
+For the full tagging protocol, see [Inline Tagging](/layers/inline-tagging).
